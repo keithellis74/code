@@ -27,6 +27,7 @@ import sys,tty,termios
 	Left motor, pins 23 & 7
 	Right motor, pins 24 & 8
 	L293 EN, pin 22
+	IR Sendor, pin 17	
 '''
 # Setup GPIO output pins
 gpio_pins = {'leftMotorPin1' : 23, 'leftMotorPin2' : 7, 'rightMotorPin1' : 24,'rightMotorPin2' : 8}
@@ -44,10 +45,10 @@ EN = GPIO.PWM(22, 200)
 EN.start(0)
 
 # Setup GPIO as input to detect object ahead using IR sensor
-#GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(17, GPIO.IN)
+ir_sensor = 17
+GPIO.setup(ir_sensor, GPIO.IN)
 
-
+Drive = 0
 
 ''' Functions to control movement of robot.  Inc. stop, forward,
  reverse, fast left, fast right, slow left, slow right '''
@@ -72,7 +73,7 @@ def stop():
 	EN.ChangeDutyCycle(0)
 	for pin in gpio_pins:
 		GPIO.output(gpio_pins[pin],0)
-	time.sleep(0.2)
+#	time.sleep(0.2)
 
 # drive_motor fuinction, this takes dc (duty cycle or speed from 0 to 100)
 # and motors, this is a LIST detailing which GPIO pins should be set to high
@@ -92,19 +93,31 @@ def drive_motor(dc,motors):
 # running in seperate thread
 
 def object_detect(channel):
-	avoid_object()	
+	global Drive
+	print ("Object_detect drive = ",Drive)
+	if Drive == 1:
+		avoid_object()
+	else:
+		pass	
 
 def avoid_object():
+	global Drive
 	drive_motor(80, ['leftMotorPin2']) 
 	while GPIO.input(17) == GPIO.LOW:
 		pass
+	time.sleep(1)
+	print("Stopping")
+	print(Drive)
 	stop()
+	Drive = 0
+	print(Drive)
+
 	
 #Main code below
 
 stop()
 #Call thread to detect object ahead
-GPIO.add_event_detect(17, GPIO.FALLING, callback=object_detect)
+GPIO.add_event_detect(17, GPIO.FALLING, callback=object_detect,bouncetime=200)
 print ("Program Running, use the following keys to control")
 print ("1 = Quit \nq = forward\na = reverse\nz = stop\n")
 print ("\nu = slow left\n[ = slow right")
@@ -115,6 +128,8 @@ while True:
 		n = n.lower()
 
 		if n == "q":		# Forwards
+			global Drive
+			Drive = 1
 			drive_motor(100,['leftMotorPin1','rightMotorPin1'])
 
 		elif n == "a":		# Reverse
