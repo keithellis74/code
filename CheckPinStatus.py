@@ -3,7 +3,7 @@
 ###                Version 00                           ###
 ### In this version -                                   ###
 ### using code from code.google.com/p/                  ###
-###     raspberry-gpio-python/wiki/Outputs              ###
+### raspberry-gpio-python/wiki/Outputs                  ###
 ###########################################################
 
 import RPi.GPIO as GPIO
