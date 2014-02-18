@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 ###############################################
 ### Testing Outputs on the Raspberry Pi     ###
-###            Version 00                   ###
+###            Version 01                   ###
 ### In this version -                       ###
-### sets up GPIO with board pin numbers     ###
-### Switches two pins high/low with         ###
-### kayboard input                          ###
+### refined switching code                  ###
+### veriables removed since no longer       ###
+### required. Outputs always finish in off  ###
+### status. Also 3 now toggles pins 11 & 12 ###
 ###############################################
 
 import RPi.GPIO as GPIO
@@ -15,37 +16,27 @@ GPIO.setup(11, GPIO.OUT)                  #setup pin 11 as output
 GPIO.setup(12, GPIO.OUT)                  #setup pin 12 as output
 
 
-Pin11 = -1                                # Variable used to switch pin value
-Pin11Value = 0                            # Variable to set value of pin
-Pin12 = -1                                # Variable used to switch pin value
-Pin12Value = 0                            # Variable to set value of pin
-
 while True:                               #This while statement works but raw_input is better
-   print ("\nPin11Value = ", Pin11Value)   
-   print ("Pin11 = ",Pin11)
-   print ("Pin12Value = ", Pin12Value)
-   print ("Pin12 = ",Pin12)
+
+   print ("Pin11 = ", GPIO.input(11))
+   print ("Pin12 = ", GPIO.input(12))
    
-   n=input("\n\nPress 1 to toggle pin 11 or 2 to toggle pin 12:\nPress q to quit\n") # than input. Find out how to use raw_input
+   input("\n\nPress 1 to toggle pin 11 or 2 to toggle pin 12:\nPress q to quit\n") # than input. Find out how to use raw_input
    if n.strip() == "1":
-      Pin11 *= -1
-      if Pin11 == -1:
-         Pin11Value = 0
-      else:
-         Pin11Value = 1
-      GPIO.output(11, Pin11Value)
-      
+      GPIO.output(11, not GPIO.input(11))      
 
    elif n.strip() == "2":
-      Pin12 *=-1
-      if Pin12 == -1:
-         Pin12Value = 0
-      else:
-         Pin12Value = 1
-      GPIO.output(12, Pin12Value)
+      GPIO.output(12, not GPIO.input(12))
 
-   elif n.strip() =="q": break 
+   elif n.strip() == "3":
+      GPIO.output(11, not GPIO.input(11))
+      GPIO.output(12, not GPIO.input(12))
+
+   elif n.strip() =="q": break ### This is not working, the GPIO.cleanup() sttement is not running
    elif n.strip() =="Q": break
 
+#GPIO.output(11, False)
+#GPIO.output(12, False)
+print ("Pin11 before quiting = ", GPIO.input(11))
+print ("Pin12 before quiting = ", GPIO.input(12))
 GPIO.cleanup()
-
