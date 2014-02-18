@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ###############################################
 ### Testing Outputs on the Raspberry Pi     ###
 ###            Version 01                   ###
