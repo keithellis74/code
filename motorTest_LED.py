@@ -12,9 +12,10 @@ Rev 02 - 07/01/2014
 Impliment PWM so that turning is slower and speeed is incremential
 Impliment drive_motor() function, this receives ducty cycle and pins to 
 set high to drive motors in desired direction
+Rev -3 - 10/02/2014
+Modify to put PWM on EN pin of L293D driver, and measure volt/currents, 
+is it any more efficient - V/Amps no different, but keep PWM on EN 
 '''
-
-
 
 import RPi.GPIO as GPIO
 import time
@@ -23,35 +24,22 @@ import sys,tty,termios
 ''' 	GPIO output pins in pairs are
 	Left motor, pins 23 & 7
 	Right motor, pins 24 & 8
+	L293 EN, pin 22
 '''
 # Setup GPIO output pins
- 
 gpio_pins = {'leftMotorPin1' : 23, 'leftMotorPin2' : 7, 'rightMotorPin1' : 24,'rightMotorPin2' : 8}
-
 GPIO.setmode(GPIO.BCM)			# Use BCM pin numbers
 
-
 # Setup all GPIO pins for output
-
-for number in gpio_pins:
-	GPIO.setup(gpio_pins[number], GPIO.OUT)
+for pin in gpio_pins:
+	GPIO.setup(gpio_pins[pin], GPIO.OUT)
 
 # GPIO pin controlling EN on motor driver, prevents motors running on boot
-GPIO.setup(22,GPIO.OUT,initial=1)
-	
+GPIO.setup(22,GPIO.OUT,initial=0)
 
-''' Setup PWM on all pins '''
-frequency = 200
-
-lm1 = GPIO.PWM(gpio_pins['leftMotorPin1'], frequency)	
-lm2 = GPIO.PWM(gpio_pins['leftMotorPin2'], frequency)	
-rm1 = GPIO.PWM(gpio_pins['rightMotorPin1'], frequency)	
-rm2 = GPIO.PWM(gpio_pins['rightMotorPin2'], frequency)
-
-pwm=[lm1, lm2, rm1, rm2]
-
-for number in pwm:
-	number.start(0)
+# Setup EN pin as PWM
+EN = GPIO.PWM(22, 200)
+EN.start(0)
 
 
 ''' Functions to control movement of robot.  Inc. stop, forward,
@@ -61,7 +49,6 @@ for number in pwm:
 # The getch method can determine which key has been pressed
 # by the user on the keyboard by accessing the system files
 # It will then return the pressed key as a variable
-
 def getch():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -75,25 +62,26 @@ def getch():
 
 # Stop Function - Sets duty cycle of all pins to zero and sleeps for 0.5 seconds
 def stop():
-	for pin in pwm:
-		pin.ChangeDutyCycle(0)
+	EN.ChangeDutyCycle(0)
+	for pin in gpio_pins:
+		GPIO.output(gpio_pins[pin],0)
 	time.sleep(0.5)
-
 
 # drive_motor fuinction, this takes dc (duty cycle or speed from 0 to 100)
 # and motors, this is a LIST detailing which GPIO pins should be set to high
-# [0,1,2,3] list of pwm
-# 0 = left motor forward, 1 = left motor revers, 2 = right motor forward
-# 3 = right motor reverse.
+# gpio_pins Dictionary contains four pin numbers 
+# left motor forward, left motor revers, right motor forward
+# right motor reverse.
 
 def drive_motor(dc,motors):
 	stop()
-	for n in range(0,dc+1):
-		for pin in motors:
-			pwm[pin].ChangeDutyCycle(n)
-			time.sleep(0.01)
-#		pwm[pin].ChangeDutyCycle(dc)
+	for pin in motors:
+		GPIO.output(gpio_pins[pin], 1)
+	for n in range(0,dc+1):	
+		EN.ChangeDutyCycle(n)
+		time.sleep(0.01)
 
+#Main code below
 
 stop()
 print ("Program Running, use the following keys to control")
@@ -105,30 +93,30 @@ while True:
 	n = n.lower()
 
 	if n == "q":		# Forwards
-		drive_motor(100,[0,2])
+		drive_motor(100,['leftMotorPin1','rightMotorPin1'])
 
 	elif n == "a":		# Reverse
-		drive_motor(100,[1,3])
+		drive_motor(100,['leftMotorPin2','rightMotorPin2'])
 
 	elif n == "o":		# fast Left
-		drive_motor(80,[1,2])
+		drive_motor(80,['leftMotorPin2','rightMotorPin1'])
 
 	elif n == "p":		# fast Right
-		drive_motor(80,[0,3])
+		drive_motor(80,['leftMotorPin1','rightMotorPin2'])
 
 	elif n == "z":		# stop
 		stop()
 
 	elif n == "i":		# slow Left
-		drive_motor(100,[2])
+		drive_motor(80,['leftMotorPin1'])
 
 	elif n == "[":		# slow Right
-		drive_motor(80,[0])
+		drive_motor(80,['rightMotorPin1'])
 
 	elif n == "1": 
 		print ("Program Ended")
+		GPIO.cleanup()
 		break
 	n=""
 
-GPIO.cleanup()
 
