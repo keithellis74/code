@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ###############################################
 ### LED Pulse Width Modulation Test         ###
 ###            Version 00                   ###
