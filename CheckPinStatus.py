@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ###########################################################
 ### Code to check the status of GPIO pins               ###
 ###                Version 00                           ###
