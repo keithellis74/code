@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''Test motor driver with 4 LED's to represent two motors
+'''Mmotor driver with object advoidance, two motors
 forward and reverse.
 
 By Keith Ellis
@@ -48,6 +48,9 @@ EN.start(0)
 ir_sensor = 17
 GPIO.setup(ir_sensor, GPIO.IN)
 
+# Global variable, 0 at all times except when driving forward then = 1
+# Used in object detect interupt to ensure it is only active when driving
+# forward
 Drive = 0
 
 ''' Functions to control movement of robot.  Inc. stop, forward,
@@ -94,11 +97,8 @@ def drive_motor(dc,motors):
 
 def object_detect(channel):
 	global Drive
-	print ("Object_detect drive = ",Drive)
 	if Drive == 1:
 		avoid_object()
-	else:
-		pass	
 
 def avoid_object():
 	global Drive
@@ -106,18 +106,18 @@ def avoid_object():
 	while GPIO.input(17) == GPIO.LOW:
 		pass
 	time.sleep(1)
-	print("Stopping")
-	print(Drive)
 	stop()
 	Drive = 0
-	print(Drive)
 
 	
 #Main code below
 
 stop()
+
 #Call thread to detect object ahead
-GPIO.add_event_detect(17, GPIO.FALLING, callback=object_detect,bouncetime=200)
+GPIO.add_event_detect(17, GPIO.FALLING, callback=object_detect)
+
+# Display keyboard commands on the screen and detect key presses
 print ("Program Running, use the following keys to control")
 print ("1 = Quit \nq = forward\na = reverse\nz = stop\n")
 print ("\nu = slow left\n[ = slow right")
