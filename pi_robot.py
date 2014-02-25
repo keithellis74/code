@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-'''Mmotor driver with object advoidance, two motors
-forward and reverse.
+''' 	Pi Robot main code
+	Motor driver for two motors forward and reverse.
+	Object advoidance with two IR sensors, one front left
+	and another front right
 
 By Keith Ellis
 
@@ -17,17 +19,22 @@ Modify to put PWM on EN pin of L293D driver, and measure volt/currents,
 is it any more efficient - V/Amps no different, but keep PWM on EN 
 Rev 04 - 10/02/2014
 Add in Threading to detect object ahead and take avoiding action
+Rev 05 - 25/02/2014
+Add second thread to detect front left and front right using two object
+detection IR sensors
 '''
 
 import RPi.GPIO as GPIO
 import time
 import sys,tty,termios
 
-''' 	GPIO output pins in pairs are
+''' 	GPIO output pins in pairs are (using BCM pin numbers)
 	Left motor, pins 23 & 7
 	Right motor, pins 24 & 8
 	L293 EN, pin 22
-	IR Sendor, pin 17	
+	IR Sensor front left, pin 17
+	IR Sensor front right, pin 27
+	Also used by Arduino Teensy for I2C pins 2 & 3 	
 '''
 # Setup GPIO output pins
 gpio_pins = {'leftMotorPin1' : 23, 'leftMotorPin2' : 7, 'rightMotorPin1' : 24,'rightMotorPin2' : 8}
@@ -45,8 +52,10 @@ EN = GPIO.PWM(22, 200)
 EN.start(0)
 
 # Setup GPIO as input to detect object ahead using IR sensor
-ir_sensor = 17
-GPIO.setup(ir_sensor, GPIO.IN)
+ir_sensor_fl = 17
+ir_sensor_fr = 27
+GPIO.setup(ir_sensor_fl, GPIO.IN)
+GPIO.setup(ir_sensor_fr, GPIO.IN)
 
 # Global variable, 0 at all times except when driving forward then = 1
 # Used in object detect interupt to ensure it is only active when driving
@@ -97,17 +106,33 @@ def drive_motor(dc,motors):
 
 def object_detect(channel):
 	global Drive
-	if Drive == 1:
-		avoid_object()
+	if Drive == forward:
+		avoid_object_forward(channel)
 
-def avoid_object():
+def avoid_object_forward(sensor):
 	global Drive
-	drive_motor(80, ['leftMotorPin2']) 
-	while GPIO.input(17) == GPIO.LOW:
-		pass
-	time.sleep(1)
-	stop()
-	Drive = 0
+	print("Sensor activated first = ",sensor)
+	if sensor == ir_sensor_fl:
+		drive_motor(80, ['rightMotorPin2']) 
+		while GPIO.input(ir_sensor_fl) ==GPIO.LOW and GPIO.input(ir_sensor_fr) == GPIO.LOW:
+			pass
+		time.sleep(1)
+		stop()
+		Drive = 0
+	else:
+		drive_motor(80, ['leftMotorPin2'])
+		while GPIO.input(ir_sensor_fl) ==GPIO.LOW and GPIO.input(ir_sensor_fr) == GPIO.LOW:
+			pass
+		time.sleep(1)
+		stop()
+		Drive = 0
+
+#	drive_motor(80, ['leftMotorPin2']) 
+#	while GPIO.input(17) == GPIO.LOW:
+#		pass
+#	time.sleep(1)
+#	stop()
+#	Drive = 0
 
 	
 #Main code below
@@ -115,7 +140,8 @@ def avoid_object():
 stop()
 
 #Call thread to detect object ahead
-GPIO.add_event_detect(17, GPIO.FALLING, callback=object_detect)
+GPIO.add_event_detect(ir_sensor_fl, GPIO.FALLING, callback=object_detect)
+GPIO.add_event_detect(ir_sensor_fr, GPIO.FALLING, callback=object_detect)
 
 # Display keyboard commands on the screen and detect key presses
 print ("Program Running, use the following keys to control")
@@ -129,7 +155,7 @@ while True:
 
 		if n == "q":		# Forwards
 			global Drive
-			Drive = 1
+			Drive = forward
 			drive_motor(100,['leftMotorPin1','rightMotorPin1'])
 
 		elif n == "a":		# Reverse
