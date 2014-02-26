@@ -85,7 +85,6 @@ def stop():
 	EN.ChangeDutyCycle(0)
 	for pin in gpio_pins:
 		GPIO.output(gpio_pins[pin],0)
-#	time.sleep(0.2)
 
 # drive_motor fuinction, this takes dc (duty cycle or speed from 0 to 100)
 # and motors, this is a LIST detailing which GPIO pins should be set to high
@@ -106,33 +105,26 @@ def drive_motor(dc,motors):
 
 def object_detect(channel):
 	global Drive
-	if Drive == forward:
+	if Drive == "forward":
 		avoid_object_forward(channel)
 
 def avoid_object_forward(sensor):
 	global Drive
-	print("Sensor activated first = ",sensor)
 	if sensor == ir_sensor_fl:
 		drive_motor(80, ['rightMotorPin2']) 
-		while GPIO.input(ir_sensor_fl) ==GPIO.LOW and GPIO.input(ir_sensor_fr) == GPIO.LOW:
+		while GPIO.input(ir_sensor_fl) ==GPIO.LOW or GPIO.input(ir_sensor_fr) == GPIO.LOW:
 			pass
-		time.sleep(1)
+		time.sleep(0.2)
 		stop()
 		Drive = 0
 	else:
 		drive_motor(80, ['leftMotorPin2'])
-		while GPIO.input(ir_sensor_fl) ==GPIO.LOW and GPIO.input(ir_sensor_fr) == GPIO.LOW:
+		while GPIO.input(ir_sensor_fl) ==GPIO.LOW or GPIO.input(ir_sensor_fr) == GPIO.LOW:
 			pass
-		time.sleep(1)
+		time.sleep(0.2)
 		stop()
 		Drive = 0
 
-#	drive_motor(80, ['leftMotorPin2']) 
-#	while GPIO.input(17) == GPIO.LOW:
-#		pass
-#	time.sleep(1)
-#	stop()
-#	Drive = 0
 
 	
 #Main code below
@@ -154,27 +146,32 @@ while True:
 		n = n.lower()
 
 		if n == "q":		# Forwards
-			global Drive
-			Drive = forward
+			Drive = "forward"
 			drive_motor(100,['leftMotorPin1','rightMotorPin1'])
 
 		elif n == "a":		# Reverse
+			Drive = 0
 			drive_motor(100,['leftMotorPin2','rightMotorPin2'])
 
 		elif n == "o":		# fast Left
-			drive_motor(80,['leftMotorPin2','rightMotorPin1'])
+			Drive = 0
+			drive_motor(100,['leftMotorPin2','rightMotorPin1'])
 
 		elif n == "p":		# fast Right
-			drive_motor(80,['leftMotorPin1','rightMotorPin2'])
+			Drive = 0
+			drive_motor(100,['leftMotorPin1','rightMotorPin2'])
 
 		elif n == "z":		# stop
+			Drive = 0
 			stop()
 
 		elif n == "i":		# slow Left
-			drive_motor(80,['rightMotorPin1'])
+			Drive = 0
+			drive_motor(100,['rightMotorPin1'])
 
 		elif n == "[":		# slow Right
-			drive_motor(80,['leftMotorPin1'])
+			Drive = 0
+			drive_motor(100,['leftMotorPin1'])
 
 		elif n == "1": 
 			print ("Program Ended")
