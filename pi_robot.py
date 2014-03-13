@@ -115,15 +115,17 @@ def avoid_object_forward(sensor):
 		while GPIO.input(ir_sensor_fl) ==GPIO.LOW or GPIO.input(ir_sensor_fr) == GPIO.LOW:
 			pass
 		time.sleep(0.2)
-		stop()
-		Drive = 0
+		drive_motor(100, ['leftMotorPin1','rightMotorPin1'])
+		#stop()
+		#Drive = 0
 	else:
 		drive_motor(80, ['leftMotorPin2'])
 		while GPIO.input(ir_sensor_fl) ==GPIO.LOW or GPIO.input(ir_sensor_fr) == GPIO.LOW:
 			pass
 		time.sleep(0.2)
-		stop()
-		Drive = 0
+		drive_motor(100, ['leftMotorPin1','rightMotorPin1'])
+		#stop()
+		#Drive = 0
 
 
 	
