@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ''' 	Pi Robot main code
 	Motor driver for two motors forward and reverse.
 	Object advoidance with two IR sensors, one front left
@@ -60,7 +60,7 @@ ir_sensor_fr = 27
 GPIO.setup(ir_sensor_fl, GPIO.IN)
 GPIO.setup(ir_sensor_fr, GPIO.IN)
 
-# Global variable, 0 at all times except when driving forward then = "forward"
+# Global variable, 0 at all times except when driving forward then = 1
 # Used in object detect interupt to ensure it is only active when driving
 # forward
 Drive = 0
@@ -136,17 +136,16 @@ def avoid_object_forward(sensor):
 
 stop()
 # Search for Wii Remote
-print "Press 1 + 2 on your Wii Remote now..."
+print("Press 1 + 2 on your Wii Remote now...")
 time.sleep(1)
 
 #Connect to the Wii Remote.  If it times out then quit.
 try:
 	wii=cwiid.Wiimote()
 	wiimote=True
-	wii.rpt_mode = cwiid.RPT_BTN
 except RuntimeError():
-	print "Error opening wiimote connection"
-	print "Use keys to control"
+	print ("Error opening wiimote connection")
+	print ("Use keys to control")
 	wiimote = False
 
 #Call thread to detect object ahead
@@ -154,50 +153,30 @@ GPIO.add_event_detect(ir_sensor_fl, GPIO.FALLING, callback=object_detect)
 GPIO.add_event_detect(ir_sensor_fr, GPIO.FALLING, callback=object_detect)
 
 # Display keyboard commands on the screen and detect key presses
-print "Program Running, use the following keys to control"
-print "1 = Quit \nq = forward\na = reverse\nz = stop\n"
-print "\nu = slow left\n[ = slow right"
-print "o = fast left\np = fast right"
+print ("Program Running, use the following keys to control")
+print ("1 = Quit \nq = forward\na = reverse\nz = stop\n")
+print ("\nu = slow left\n[ = slow right")
+print ("o = fast left\np = fast right")
 
-print "wiimote = ",wiimote
 if wiimote == True:
-	while wiimote == True:
-		buttons = wii.state["buttons"]
-		print buttons
+	while True:
+		buttons = wii.state['buttons']
 		# If Plus and Minus buttons pressed
 		# together then rumble and quit.
 		if (buttons - cwiid.BTN_PLUS - cwiid.BTN_MINUS == 0):
-			print "\nClosing connection ..."
+			print ("\nClosing connection ...")
 			wii.rumble = 1
 			time.sleep(1)
 			wii.rumble = 0
-			wiimote = False
-			#exit(wii)
+			exit(wii)
 
 		elif(buttons & cwiid.BTN_UP):  #  Forwards
-			print "forward"
 			Drive = "forward"
 			drive_motor(100,['leftMotorPin1','rightMotorPin1'])
 		elif(buttons & cwiid.BTN_DOWN):  #  Reverse
-			print "reverse"
 			Drive = 0
 			drive_motor(100,['leftMotorPin2','rightMotorPin2'])
-		elif(buttons == 256):  #  Slow Left
-                        print "slow left"
-                        Drive = "forward"
-                        drive_motor(100,['rightMotorPin1'])
-                elif(buttons == 512):  #  Slow right
-                        print "slow right"
-                        Drive = 0
-                        drive_motor(100,['leftMotorPin1'])
-		if(buttons == 260):  #  Fast left
-                        print "Fast left"
-                        Drive = "forward"
-                        drive_motor(100,['leftMotorPin2','rightMotorPin1'])
-                if(buttons == 516):  #  Fast right
-                        print "Fast right"
-                        Drive = 0
-                        drive_motor(100,['leftMotorPin1','rightMotorPin2'])
+
 
 
 elif wiimote == False:
@@ -244,6 +223,3 @@ elif wiimote == False:
 		except (KeyboardInterrupt):
 			GPIO.cleanup()
 			break
-
-
-GPIO.cleanup()
