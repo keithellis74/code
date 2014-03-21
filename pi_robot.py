@@ -96,12 +96,12 @@ def stop():
 # right motor reverse.
 
 def drive_motor(dc,motors):
-	stop()
+#	stop()
 	for pin in motors:
 		GPIO.output(gpio_pins[pin], 1)
-	for n in range(0,dc+1):	
-		EN.ChangeDutyCycle(n)
-		time.sleep(0.01)
+#	for n in range(0,dc+1):	
+		EN.ChangeDutyCycle(dc)
+#		time.sleep(0.01)
 
 # Function to take avoiding action if object detected ahead
 # running in seperate thread
@@ -190,15 +190,17 @@ if wiimote == True:
                         print "slow right"
                         Drive = 0
                         drive_motor(100,['leftMotorPin1'])
-		if(buttons == 260):  #  Fast left
+		elif(buttons == 260):  #  Fast left
                         print "Fast left"
                         Drive = "forward"
                         drive_motor(100,['leftMotorPin2','rightMotorPin1'])
-                if(buttons == 516):  #  Fast right
+                elif(buttons == 516):  #  Fast right
                         print "Fast right"
                         Drive = 0
                         drive_motor(100,['leftMotorPin1','rightMotorPin2'])
 
+		else:
+			stop()
 
 elif wiimote == False:
 	while True:
