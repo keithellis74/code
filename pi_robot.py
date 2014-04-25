@@ -24,6 +24,10 @@ Add second thread to detect front left and front right using two object
 detection IR sensors
 Rev 06 - 13/03/2014
 Start to impliment Wii Remote control (buttons only)
+Rev 07 - ??
+Wii remote works with cross hair buttons and also forward speed is controlled
+with Wii remote tilting.  Vertical = Stop, horizontal = full speed forward
+
 '''
 
 import RPi.GPIO as GPIO
@@ -83,7 +87,7 @@ def getch():
     return ch
 
 
-# Stop Function - Sets duty cycle of all pins to zero and sleeps for 0.5 seconds
+# Stop Function - Sets duty cycle of all pins to zero
 def stop():
 	EN.ChangeDutyCycle(0)
 	for pin in gpio_pins:
@@ -143,8 +147,8 @@ time.sleep(1)
 try:
 	wii=cwiid.Wiimote()
 	wiimote=True
-	wii.rpt_mode = cwiid.RPT_BTN
-except RuntimeError():
+	wii.rpt_mode = cwiid.RPT_BTN | cwiid.RPT_ACC
+except RuntimeError:
 	print "Error opening wiimote connection"
 	print "Use keys to control"
 	wiimote = False
@@ -154,15 +158,12 @@ GPIO.add_event_detect(ir_sensor_fl, GPIO.FALLING, callback=object_detect)
 GPIO.add_event_detect(ir_sensor_fr, GPIO.FALLING, callback=object_detect)
 
 # Display keyboard commands on the screen and detect key presses
-print "Program Running, use the following keys to control"
-print "1 = Quit \nq = forward\na = reverse\nz = stop\n"
-print "\nu = slow left\n[ = slow right"
-print "o = fast left\np = fast right"
 
 print "wiimote = ",wiimote
 if wiimote == True:
 	while wiimote == True:
 		buttons = wii.state["buttons"]
+		acc_x = wii.state['acc'][1]
 		print buttons
 		# If Plus and Minus buttons pressed
 		# together then rumble and quit.
@@ -173,11 +174,20 @@ if wiimote == True:
 			wii.rumble = 0
 			wiimote = False
 			#exit(wii)
+			GPIO.cleanup()
 
-		elif(buttons & cwiid.BTN_UP):  #  Forwards
+		elif(buttons == 2048):  #  Forwards
 			print "forward"
 			Drive = "forward"
-			drive_motor(100,['leftMotorPin1','rightMotorPin1'])
+			if acc_x < 100:
+				dc = 0
+			elif acc_x > 125:
+				dc = 100
+			else:
+				dc = ((float(acc_x)-100)/25)*100
+			print 'dc = ',dc
+			print 'acc_x' ,acc_x
+			drive_motor(dc,['leftMotorPin1','rightMotorPin1'])
 		elif(buttons & cwiid.BTN_DOWN):  #  Reverse
 			print "reverse"
 			Drive = 0
@@ -203,6 +213,10 @@ if wiimote == True:
 			stop()
 
 elif wiimote == False:
+	print "Program Running, use the following keys to control"
+	print "1 = Quit \nq = forward\na = reverse\nz = stop\n"
+	print "\nu = slow left\n[ = slow right"
+	print "o = fast left\np = fast right"
 	while True:
 		try:
 			n = getch()
@@ -248,4 +262,4 @@ elif wiimote == False:
 			break
 
 
-GPIO.cleanup()
+#GPIO.cleanup()
